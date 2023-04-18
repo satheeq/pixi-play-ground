@@ -31,6 +31,11 @@ function start() {
         // app.stage.interactiveChildren = true;
         app.stage.hitArea = app.screen;
 
+        const ticker = app.ticker;
+
+        ticker.autoStart = false;
+        ticker.stop();
+
         return app;
     }
 
@@ -54,11 +59,8 @@ function start() {
 
     function onDragMove(event) {
         if (container.dragging) {
-            const position = container.getBounds();
             console.log('onDragMove', event.x);
-
             container.x = event.x - container.dx;
-            // container.y = position.y;
         }
     }
 
@@ -67,10 +69,6 @@ function start() {
 
     const app = _createApp();
     document.body.appendChild(app.view);
-
-    function getMousePointer() {
-        return app.renderer.plugins.interaction.mouse.global;
-    }
 
 // Add a container
     const container = new PIXI.Container();
@@ -133,11 +131,26 @@ function start() {
     container.addChild(candleGrp);
     container.addChild(lineGrp);
 
-    setTimeout(() => {
-        console.log('timeout');
+    let started = false;
+
+    setInterval(() => {
+
+        if (started && !container.dragging) {
+            console.log('ticker stop');
+            started = false;
+
+            app.ticker.stop();
+        } else {
+            console.log('ticker start');
+            started = true;
+
+            app.ticker.start();
+        }
+
+
         // console.log('mousepoint', getMousePointer());
         // app.view.style.height = '100%';
         // app.view.style.width = '100%';
-    }, 5000);
+    }, 200);
 
 }
