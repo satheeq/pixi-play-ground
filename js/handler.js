@@ -40,11 +40,11 @@ function start() {
     }
 
     function onDragStart(event) {
+        app.ticker.start();
+
         container.eventData = event.data;
         container.dragging = true;
         container.dx = event.data.x - container.x;
-
-        // app.stage.on('pointermove', onDragMoveApp);
 
         console.log('onDragStart');
     }
@@ -54,6 +54,7 @@ function start() {
         container.dragging = false;
         // app.stage.off('pointermove', onDragMoveApp);
 
+        app.ticker.stop();
         console.log('onDragEnd');
     }
 
@@ -131,26 +132,11 @@ function start() {
     container.addChild(candleGrp);
     container.addChild(lineGrp);
 
-    let started = false;
-
     setInterval(() => {
-
-        if (started && !container.dragging) {
-            console.log('ticker stop');
-            started = false;
-
-            app.ticker.stop();
-        } else {
-            console.log('ticker start');
-            started = true;
-
-            app.ticker.start();
+        if (!container.dragging) {
+            app.ticker.update();
+            app.renderer.render(app.stage);
         }
-
-
-        // console.log('mousepoint', getMousePointer());
-        // app.view.style.height = '100%';
-        // app.view.style.width = '100%';
-    }, 200);
+    }, 300);
 
 }
