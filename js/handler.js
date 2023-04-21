@@ -95,7 +95,7 @@ function start() {
     const data = getJSONData();
     console.error('data count', data.length);
 
-    let x = 0,
+    let x = app.stage.hitArea.width - 50,
         y = 0,
         candW = 10,
         candH = 30,
@@ -104,12 +104,12 @@ function start() {
         bear = 0xE06666,
         color = bull;
 
-    lineGrp.moveTo(14, data[0].open + 15);
+    lineGrp.moveTo(x, data[0].open + 15);
 
 
     for (let i = 0; i < data.length; i++) {
         point = data[i];
-        x = x + candW + 4;
+        x = x - candW - 4;
         y = point.close;
 
         color = point.close < point.open ? bear : bull;
