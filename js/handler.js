@@ -24,10 +24,13 @@ function start() {
 
         PIXI.settings.RESOLUTION = window.devicePixelRatio;
         PIXI.settings.ROUND_PIXELS = false;
-        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.LINEAR; // NEAREST- Pixelating scaling; LINEAR - Smooth scaling
+        // PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.LINEAR; // NEAREST- Pixelating scaling; LINEAR - Smooth scaling
+        PIXI.BaseTexture.defaultOptions.scaleMode = PIXI.SCALE_MODES.LINEAR;
 
         // Setting up events
-        app.stage.interactive = true;
+        // app.stage.interactive = true; // This is depreciated
+        app.stage.eventMode  = 'static';
+
         // app.stage.interactiveChildren = true;
         app.stage.hitArea = app.screen;
 
