@@ -65,6 +65,52 @@ function start() {
         }
     }
 
+    function initChart(container) {
+        // Create window frame
+        let candleGrp = new PIXI.Graphics();
+        let lineGrp = new PIXI.Graphics();
+
+        const data = getJSONData();
+        console.error('data count', data.length);
+
+        let x = app.stage.hitArea.width - 50,
+            y = 0,
+            candW = 10,
+            candH = 30,
+            point = null,
+            bull = 0x05CE2E,
+            bear = 0xE06666,
+            color = bull;
+
+        lineGrp.moveTo(x, data[0].open + 15);
+
+
+        for (let i = 0; i < 100; i++) {
+            point = data[i];
+            x = x - candW - 4;
+            y = point.close;
+
+            color = point.close < point.open ? bear : bull;
+
+            candleGrp.beginFill(color);
+            candleGrp.lineStyle({color: 0xFFFFFF, width: 1, alignment: 0});
+            candH = (point.close - point.open) * 6;
+            candleGrp.drawRect(x, y, candW, candH);
+            candleGrp.moveTo(x, y);
+            candleGrp.endFill();
+
+            lineGrp.beginFill(0xFFF666);
+            lineGrp.lineStyle({color: 0x6FA8DC, width: 2, alignment: 0});
+            lineGrp.lineTo(x, point.open + 15);
+        }
+
+        lineGrp.closePath();
+        lineGrp.endFill();
+
+        container.addChild(candleGrp);
+        container.addChild(lineGrp);
+    }
+
     // Create the application helper and add its render target to the page
     // const app = new PIXI.Application({width: document.width, height: document.height});
 
@@ -75,11 +121,6 @@ function start() {
     const container = new PIXI.Container();
     container.x = 0;
     container.y = 0;
-// container.interactiveChildren = true;
-
-// app.stage.on('pointerdown', onDragStart);
-// container.hitArea = app.screen;
-// container.interactive = true;
 
     app.stage.on('pointerdown', onDragStart);
     app.stage.on('pointerup', onDragEnd);
@@ -88,50 +129,10 @@ function start() {
 
     app.stage.addChild(container);
 
-// Create window frame
-    let candleGrp = new PIXI.Graphics();
-    let lineGrp = new PIXI.Graphics();
+    initChart(container);
 
-    const data = getJSONData();
-    console.error('data count', data.length);
-
-    let x = app.stage.hitArea.width - 50,
-        y = 0,
-        candW = 10,
-        candH = 30,
-        point = null,
-        bull = 0x05CE2E,
-        bear = 0xE06666,
-        color = bull;
-
-    lineGrp.moveTo(x, data[0].open + 15);
-
-
-    for (let i = 0; i < data.length; i++) {
-        point = data[i];
-        x = x - candW - 4;
-        y = point.close;
-
-        color = point.close < point.open ? bear : bull;
-
-        candleGrp.beginFill(color);
-        candleGrp.lineStyle({color: 0xFFFFFF, width: 1, alignment: 0});
-        candH = (point.close - point.open) * 6;
-        candleGrp.drawRect(x, y, candW, candH);
-        candleGrp.moveTo(x, y);
-        candleGrp.endFill();
-
-        lineGrp.beginFill(0xFFF666);
-        lineGrp.lineStyle({color: 0x6FA8DC, width: 2, alignment: 0});
-        lineGrp.lineTo(x, point.open + 15);
-    }
-
-    lineGrp.closePath();
-    lineGrp.endFill();
-
-    container.addChild(candleGrp);
-    container.addChild(lineGrp);
-
+    // Re-render based on a timer
+    // When dragging happens, ticker enabled to update without timer
     setInterval(() => {
         if (!container.dragging) {
             app.ticker.update();
