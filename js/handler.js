@@ -32,7 +32,7 @@ function _createApp() {
     PIXI.BaseTexture.defaultOptions.scaleMode = PIXI.SCALE_MODES.LINEAR;
 
     // Setting up events
-    app.stage.interactive = true; // This is depreciated in 7.2
+    // app.stage.interactive = true; // This is depreciated in 7.2
     app.stage.eventMode = 'static'; // Used above 7.2
 
     app.stage.interactiveChildren = true;
@@ -41,10 +41,11 @@ function _createApp() {
     const ticker = app.ticker;
 
     ticker.stop();
-    // ticker.autoStart = false;
+    PIXI.Ticker.system.stop(); // System ticker usage 7.2 & Above
 
     // Register events
     console.log('registering events');
+
     app.stage.on('pointerdown', onDragStart);
     app.stage.on('pointerup', () => {
         console.log('pointerUp');
@@ -56,12 +57,12 @@ function _createApp() {
     });
     app.stage.on('pointermove', onDragMove);
 
-    app.stage.on('pointerenter', () => {
-        console.log('pointerEnter');
-    });
-    app.stage.on('pointerleave', () => {
-        console.log('pointerLeave');
-    });
+    // app.stage.on('pointerenter', () => {
+    //     console.log('pointerEnter');
+    // });
+    // app.stage.on('pointerleave', () => {
+    //     console.log('pointerLeave');
+    // });
 
     // Create the application helper and add its render target to the page
     htmlContainer.appendChild(app.view);
