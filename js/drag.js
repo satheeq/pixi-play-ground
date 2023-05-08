@@ -9,7 +9,7 @@ function start () {
     var candleShape = PIXI.Texture.fromImage('_assets/candle.png');
 
     for (var i = 0; i < 10; i++) {
-        createCandle(100*(i/2), 300));
+        createCandle(100*(i/2), 300);
     }
 }
 
