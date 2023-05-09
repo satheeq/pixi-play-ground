@@ -1,6 +1,7 @@
 let app;
 let baseContainer;
 let isDragging = false;
+let line;
 
 function _createApp() {
     console.log('PIXI Version', PIXI.VERSION);
@@ -71,18 +72,26 @@ function onDragStart(event) {
     console.log('onDragStart');
 }
 
-function onDragEnd() {
+function onDragEnd(e) {
     if (isDragging) {
         isDragging = false;
 
         app.ticker.stop(); // Stop the ticker once drag finises
         console.log('onDragEnd');
     }
+    e.currentTarget.cursor = 'auto';
 }
 
-function onDragMove(event) {
+function onDragMove(e) {
     if (isDragging) {
-        baseContainer.x = event.x - baseContainer.dx;
+        baseContainer.x = e.x - baseContainer.dx;
+    } else if (line.dragging) {
+        e.currentTarget.cursor = 'move';
+        let distanceX = e.global.x - line.startX;
+        let distanceY = e.global.y - line.startY;
+
+        line.x = line.rectStartX + distanceX;
+        line.y = line.rectStartY + distanceY;
     }
 }
 
@@ -144,25 +153,34 @@ function _createContainer() {
 }
 
 function _addLine() {
-    // const texture = PIXI.Texture.WHITE;
-    // const line = new PIXI.Sprite(texture);
-    //
-    // line.width = 100; // set the length of the line
-    // line.height = 10; // set the thickness of the line
-    // line.tint = 0xFF0000;
+    line = new PIXI.Graphics();
+    let white = 0XFFFFFF;
+    let hitPoints = [];
+    let width = 1;
 
-    let line = new PIXI.Graphics();
-    // let white = 0XFFFFFF;
-    // let red = 0xFF0000;
-    //
-    // line.lineStyle(15, white, 1);
-    // line.moveTo(50, 50);
-    // line.lineTo(300, 300);
+    const p1 = {x: 50, y: 50};
+    const p2 = {x: 300, y: 300};
+    const angle = Math.atan2(p1.y - p2.y, p1.x - p2.x);
 
-    line.beginFill(0x0000ff);
-    line.lineStyle(1, 0x000000);
-    line.drawRect(50, 50, 100, 100);
-    line.endFill();
+    line.lineStyle(width, white, 1);
+    line.moveTo(p1.x, p1.y);
+    line.lineTo(p2.x, p2.y);
+
+    // line.beginFill(0x0000ff);
+    // line.lineStyle(1, 0x000000);
+    // line.drawRect(50, 50, 100, 100);
+    // line.endFill();
+
+    hitPoints.push(p1.x - width / 2 * Math.sin(angle));
+    hitPoints.push(p1.y + width / 2 * Math.cos(angle));
+    hitPoints.push(p2.x - width / 2 * Math.sin(angle));
+    hitPoints.push(p2.y + width / 2 * Math.cos(angle));
+    hitPoints.push(p2.x + width / 2 * Math.sin(angle));
+    hitPoints.push(p2.y - width / 2 * Math.cos(angle));
+    hitPoints.push(p1.x + width / 2 * Math.sin(angle));
+    hitPoints.push(p1.y - width / 2 * Math.cos(angle));
+
+    line.hitArea = new PIXI.Polygon(hitPoints);
 
     line.eventMode = 'static';
 
@@ -176,39 +194,39 @@ function _addLine() {
         line.rectStartX = line.x;
         line.rectStartY = line.y;
 
-        e.stopPropagation();
+        e.stopPropagation(); // important
     });
 
-    line.on('pointermove', (e) => {
-        if (line.dragging) {
-            let distanceX = e.global.x - line.startX;
-            let distanceY = e.global.y - line.startY;
-
-            line.x = line.rectStartX + distanceX;
-            line.y = line.rectStartY + distanceY;
-
-            e.stopPropagation();
-        }
-    });
+    // line.on('pointermove', (e) => {
+    //     if (line.dragging) {
+    //         let distanceX = e.global.x - line.startX;
+    //         let distanceY = e.global.y - line.startY;
+    //
+    //         line.x = line.rectStartX + distanceX;
+    //         line.y = line.rectStartY + distanceY;
+    //
+    //         e.stopPropagation();
+    //     }
+    // });
 
     line.on('pointerup', (e) => {
         line.dragging = false;
         app.ticker.stop();
-        e.stopPropagation();
     });
 
     line.on('pointerupoutside', (e) => {
         line.dragging = false;
         app.ticker.stop();
-        e.stopPropagation();
     });
 
-    line.on('mouseover', (event) => {
-        event.currentTarget.cursor = 'pointer';
+    line.on('pointerover', (event) => {
+        event.currentTarget.cursor = 'move';
     });
 
     line.on('pointerout', (event) => {
-        event.currentTarget.cursor = 'auto';
+        if (!line.dragging) {
+            event.currentTarget.cursor = 'auto';
+        }
     });
 
     baseContainer.addChild(line);
