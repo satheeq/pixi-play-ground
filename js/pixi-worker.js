@@ -1,3 +1,5 @@
+//importScripts('https://cdn.jsdelivr.net/npm/@pixi/webworker@7.2.4/dist/webworker.min.js');
+
 let app;
 let baseContainer;
 let isDragging = false;
@@ -152,6 +154,20 @@ function _createContainer() {
 function _createWebWorker() {
     console.log('creating web worker');
 
+    const width = 800, height = 600;
+    const resolution = window.devicePixelRatio;
+    const canvas = document.createElement('canvas');
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    const targetDiv = document.getElementById('chartContainer');
+    targetDiv.appendChild(canvas);
+
+    // Create the worker
+    const worker = new Worker('worker.js');
+    // Transfer canvas to the worker
+    const view = canvas.transferControlToOffscreen();
+
+
     let webWorkerInstant = new Worker('./js/worker.js');
 
     webWorkerInstant.addEventListener('message', (event) => {
@@ -162,7 +178,7 @@ function _createWebWorker() {
         }
     });
 
-    webWorkerInstant.postMessage("some message");
+    webWorkerInstant.postMessage({ width, height, resolution, view }, [view]);
 }
 
 function start() {
