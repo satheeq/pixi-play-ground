@@ -45,18 +45,18 @@ function _createApp() {
     PIXI.Ticker.system.stop(); // System ticker usage 7.2 & Above
 
     // Register events
-    console.log('registering events');
-
-    app.stage.on('pointerdown', onDragStart);
-    app.stage.on('pointerup', () => {
-        console.log('pointerUp');
-        onDragEnd();
-    });
-    app.stage.on('pointerupoutside', () => {
-        console.log('pointerupOutside');
-        onDragEnd();
-    });
-    app.stage.on('pointermove', onDragMove);
+    // console.log('registering events');
+    //
+    // app.stage.on('pointerdown', onDragStart);
+    // app.stage.on('pointerup', () => {
+    //     console.log('pointerUp');
+    //     onDragEnd();
+    // });
+    // app.stage.on('pointerupoutside', () => {
+    //     console.log('pointerupOutside');
+    //     onDragEnd();
+    // });
+    // app.stage.on('pointermove', onDragMove);
 
     // app.stage.on('pointerenter', () => {
     //     console.log('pointerEnter');
@@ -149,17 +149,34 @@ function _createContainer() {
     app.stage.addChild(baseContainer);
 }
 
+function _createWebWorker() {
+    console.log('creating web worker');
+
+    let webWorkerInstant = new Worker('./js/worker.js');
+
+    webWorkerInstant.addEventListener('message', (event) => {
+        if (event.data.success) {
+            console.error(event.data.data.length);
+        } else {
+            console.error('Error:', event.data.error);
+        }
+    });
+
+    webWorkerInstant.postMessage("some message");
+}
+
 function start() {
-    _createApp();
-    _createContainer();
-    _initChart(baseContainer);
+    // _createApp();
+    _createWebWorker();
+    // _createContainer();
+    // _initChart(baseContainer);
 
     // Re-render based on a timer
     // When dragging happens, ticker enabled to update without timer
-    setInterval(() => {
-        if (!isDragging) {
-            app.ticker.update(performance.now());
-            app.renderer.render(app.stage);
-        }
-    }, 300);
+    // setInterval(() => {
+    //     if (!isDragging) {
+    //         app.ticker.update(performance.now());
+    //         app.renderer.render(app.stage);
+    //     }
+    // }, 300);
 }
