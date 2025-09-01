@@ -9,11 +9,13 @@ const style = new PIXI.TextStyle({
 const numTextItems = 0; // adjust to stress test
 const numSpriteItems = 0; // adjust to stress test
 const numBitItems = 0; // adjust to stress test
-const numCanItems = 10000; // adjust to stress test
+const numSimBitItems = 1000; // adjust to stress test
+const numCanItems = 0; // adjust to stress test
 
 const textObjects = [];
 const spriteObjects = [];
 const bitmapObjects = [];
+const simBitmapObjects = [];
 const canObjects = [];
 
 function start() {
@@ -49,13 +51,27 @@ function start() {
     }
 
     // Create BitmapText objects
-    // for (let i = 0; i < numBitItems; i++) {
-    //     const b = new PIXI.BitmapText("BitmapText", { fontName: 'Destroy', fontSize: 24, tint: 0x808080 });
-    //     b.x = Math.random() * app.screen.width;
-    //     b.y = Math.random() * app.screen.height;
-    //     app.stage.addChild(b);
-    //     bitmapObjects.push(b);
-    // }
+    PIXI.BitmapFont.from("MyFont", {
+        fontFamily: "Arial",
+        fontSize: 18,
+        fill: 0x00ccff
+    });
+
+    for (let i = 0; i < numBitItems; i++) {
+        const b = new PIXI.BitmapText("BitmapText", { fontName: 'MyFont', fontSize: 24, tint: 0x808080 });
+        b.x = Math.random() * app.screen.width;
+        b.y = Math.random() * app.screen.height;
+        app.stage.addChild(b);
+        bitmapObjects.push(b);
+    }
+
+    for (let i = 0; i < numSimBitItems; i++) {
+        const b = new PIXI.BitmapText("SimBit", { fontName: 'MyFont', fontSize: 24, tint: 0x808080 });
+        b.x = Math.random() * app.screen.width;
+        b.y = Math.random() * app.screen.height;
+        app.stage.addChild(b);
+        simBitmapObjects.push(b);
+    }
 
     // Create Canvas-based Sprite objects
     for (let i = 0; i < numCanItems; i++) {
@@ -91,20 +107,27 @@ function start() {
 
         // Move Sprites (with texture regeneration)
         spriteObjects.forEach((s, i) => {
-            s.texture.destroy(true); // Destroy the old texture to free memory, this is too expensive!!!
+            // s.texture.destroy(true); // Destroy the old texture to free memory, this is too expensive!!!
 
-            textObj.text = "SpriteText " + Math.floor(counter + i);
+            // textObj.text = "SpriteText " + Math.floor(counter + i);
             // textObj.style.fill = Math.random() * 0xFFFFFF; // Change color to force texture update
             //
 
-            s.texture = app.renderer.generateTexture(textObj);
+            // s.texture = app.renderer.generateTexture(textObj);
             s.x += Math.cos(counter + i) * 0.5;
         });
 
-        // // Move BitmapText (no texture regeneration)
-        // bitmapObjects.forEach((b, i) => {
-        //     b.x += Math.sin(counter + i) * 0.5;
-        // });
+        // Move BitmapText (no texture regeneration)
+        bitmapObjects.forEach((b, i) => {
+            b.text = "BitmapText " + Math.floor(counter + i);
+            b.x += Math.sin(counter + i) * 0.8;
+        });
+
+        // Move SimBitmapText (no texture regeneration)
+        simBitmapObjects.forEach((b, i) => {
+            // b.text = "SimBit " + Math.floor(counter + i);
+            b.x += Math.sin(counter + i) * 0.8;
+        });
 
         // Update canvas textures
         canObjects.forEach((s, i) => {
