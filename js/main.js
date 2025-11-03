@@ -2,7 +2,7 @@ let app;
 let baseContainer;
 let isDragging = false;
 let webWorkerInstant;
-let baseCanvas;
+let drawingCanvas;
 let actionCanvas;
 
 function _createApp() {
@@ -155,15 +155,19 @@ function _createContainer() {
 function _createWebWorker() {
     console.log('Creating web worker (pixi imported)');
 
-    const width = 800, height = 600;
+    const controllerContainer = document.getElementById('chartControllerContainer');
+    const canvasContainer = document.getElementById('chartContainer');
+
+    const width = document.body.clientWidth,
+        height = document.body.clientHeight - (controllerContainer.clientHeight); // 10px Margin and 16px body margin
     const resolution = window.devicePixelRatio;
 
-    baseCanvas = document.createElement('canvas'); // Drawing Panel
+    drawingCanvas = document.createElement('canvas'); // Drawing Panel
     actionCanvas = document.createElement('canvas'); // Interaction Panel
 
-    baseCanvas.id = 'baseCanvas';
-    baseCanvas.style.width = `${width}px`;
-    baseCanvas.style.height = `${height}px`;
+    drawingCanvas.id = 'baseCanvas';
+    drawingCanvas.style.width = `${width}px`;
+    drawingCanvas.style.height = `${height}px`;
 
     actionCanvas.id = 'overlayCanvas';
     actionCanvas.width = width * resolution;
@@ -171,13 +175,11 @@ function _createWebWorker() {
     actionCanvas.style.width = `${width}px`;
     actionCanvas.style.height = `${height}px`;
 
-    const targetDiv = document.getElementById('chartContainer');
-
-    targetDiv.appendChild(actionCanvas);
-    targetDiv.appendChild(baseCanvas);
+    canvasContainer.appendChild(actionCanvas);
+    canvasContainer.appendChild(drawingCanvas);
 
     // Transfer canvas control to the worker
-    const view = baseCanvas.transferControlToOffscreen();
+    const view = drawingCanvas.transferControlToOffscreen();
 
     // Create the worker
     webWorkerInstant = new Worker('./js/worker.js');

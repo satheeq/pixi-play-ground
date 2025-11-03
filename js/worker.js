@@ -39,8 +39,8 @@ self.addEventListener('message', async (event) => {
                 bunny = new PIXI.Sprite(texture);
 
                 // Setup the position of the bunny
-                bunny.x = app.renderer.width / 2;
-                bunny.y = app.renderer.height / 2;
+                bunny.x = width / 2;
+                bunny.y = height / 2;
 
                 // Rotate around the center
                 bunny.anchor.x = 0.5;
