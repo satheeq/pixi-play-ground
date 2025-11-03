@@ -1,8 +1,9 @@
-//importScripts('https://cdn.jsdelivr.net/npm/@pixi/webworker@7.2.4/dist/webworker.min.js');
-
 let app;
 let baseContainer;
 let isDragging = false;
+let webWorkerInstant;
+let baseCanvas;
+let actionCanvas;
 
 function _createApp() {
     console.log('PIXI Version', PIXI.VERSION);
@@ -152,23 +153,34 @@ function _createContainer() {
 }
 
 function _createWebWorker() {
-    console.log('creating web worker');
+    console.log('Creating web worker (pixi imported)');
 
     const width = 800, height = 600;
     const resolution = window.devicePixelRatio;
-    const canvas = document.createElement('canvas');
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
+
+    baseCanvas = document.createElement('canvas'); // Drawing Panel
+    actionCanvas = document.createElement('canvas'); // Interaction Panel
+
+    baseCanvas.id = 'baseCanvas';
+    baseCanvas.style.width = `${width}px`;
+    baseCanvas.style.height = `${height}px`;
+
+    actionCanvas.id = 'overlayCanvas';
+    actionCanvas.width = width * resolution;
+    actionCanvas.height = height * resolution;
+    actionCanvas.style.width = `${width}px`;
+    actionCanvas.style.height = `${height}px`;
+
     const targetDiv = document.getElementById('chartContainer');
-    targetDiv.appendChild(canvas);
+
+    targetDiv.appendChild(actionCanvas);
+    targetDiv.appendChild(baseCanvas);
+
+    // Transfer canvas control to the worker
+    const view = baseCanvas.transferControlToOffscreen();
 
     // Create the worker
-    const worker = new Worker('worker.js');
-    // Transfer canvas to the worker
-    const view = canvas.transferControlToOffscreen();
-
-
-    let webWorkerInstant = new Worker('./js/worker.js');
+    webWorkerInstant = new Worker('./js/worker.js');
 
     webWorkerInstant.addEventListener('message', (event) => {
         if (event.data.success) {
@@ -178,12 +190,55 @@ function _createWebWorker() {
         }
     });
 
-    webWorkerInstant.postMessage({ width, height, resolution, view }, [view]);
+    webWorkerInstant.postMessage({msgType: 'INIT', data: { width, height, resolution, view }}, [view]);
+}
+
+function _subscribeBtnActions () {
+    // Button Events subscribe
+    document.getElementById('speedPlus').addEventListener('click', () => {
+        console.info('Speed + Clicked...');
+        webWorkerInstant.postMessage({msgType: 'ACTION', data:{ actionType: 'speedPlus', value: 0.02 }});
+    });
+
+    document.getElementById('speedMinus').addEventListener('click', () => {
+        console.info('Speed - Clicked...');
+        webWorkerInstant.postMessage({msgType: 'ACTION', data:{ actionType: 'speedMinus', value: 0.02 }});
+    });
+}
+
+function _subscribeCanvasEvents () {
+    let lastSent = 0;
+
+    actionCanvas.addEventListener('mousemove', (e) => {
+        const now = performance.now();
+
+        if (now - lastSent > 16) { // ~60fps
+            lastSent = now;
+
+            const rect = actionCanvas.getBoundingClientRect(); // position of canvas in page
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            webWorkerInstant.postMessage({msgType: 'EVENT', data: { eventType: 'mousemove', point: {x, y} }});
+        }
+    });
+
+    ['mousedown', 'mouseup', 'click'].forEach(type => {
+        actionCanvas.addEventListener(type, (e) => {
+            const rect = actionCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            webWorkerInstant.postMessage({msgType: 'EVENT', data: {eventType: type, point: {x, y}}});
+        });
+    });
 }
 
 function start() {
     // _createApp();
     _createWebWorker();
+    _subscribeBtnActions();
+    _subscribeCanvasEvents();
     // _createContainer();
     // _initChart(baseContainer);
 
