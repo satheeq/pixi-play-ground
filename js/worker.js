@@ -1,6 +1,7 @@
 importScripts('../lib/pixi-worker-lib.js'); // Import Web Worker support PIXI library
 
 let app;
+let dataWorkerPort;
 let bunny;
 let bunnyRotation = 0.02;
 let textStyle = new PIXI.TextStyle({
@@ -21,7 +22,7 @@ let textPool = [
 
 self.addEventListener('message', async (event) => {
     if (event.data) {
-        const { msgType, data } = event.data;
+        const { msgType, data, port } = event.data;
 
         switch (msgType) {
             case 'INIT':
@@ -31,6 +32,12 @@ self.addEventListener('message', async (event) => {
                 // with a fallback to a canvas render. It will also setup the ticker
                 // and the root stage PIXI.Container
                 app = new PIXI.Application({ width, height, background: '#1099bb', resolution, view });
+                dataWorkerPort = port;
+
+                dataWorkerPort.onmessage = function (event) {
+                    handleDataWorkerEvents(event);
+                };
+                dataWorkerPort.start();
 
                 // load the texture we need
                 const texture = await PIXI.Assets.load('https://pixijs.com/assets/bunny.png');
@@ -113,6 +120,21 @@ self.addEventListener('message', async (event) => {
                 }
                 break;
 
+            case 'DRAW':
+                // Request for chart data
+                dataWorkerPort.postMessage({
+                    msgType: 'FETCH_DATA',
+                    params:  {
+                        type: 'WEB',
+                        data: {
+                            sym: '1010',
+                            exg: 'TDWL',
+                            interval: '1D',
+                            period: '1Y'
+                        }
+                    }});
+                break;
+
             default:
         }
 
@@ -122,3 +144,11 @@ self.addEventListener('message', async (event) => {
 
 
 });
+
+function handleDataWorkerEvents (event) {
+    switch (event.data.msgType) {
+        case 'RECEIVE_DATA':
+            console.log(JSON.stringify(event.data));
+            break;
+    }
+}

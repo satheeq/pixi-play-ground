@@ -1,7 +1,8 @@
 let app;
 let baseContainer;
 let isDragging = false;
-let webWorkerInstant;
+let drawingWorker;
+let dataWorker;
 let drawingCanvas;
 let actionCanvas;
 
@@ -182,9 +183,12 @@ function _createWebWorker() {
     const view = drawingCanvas.transferControlToOffscreen();
 
     // Create the worker
-    webWorkerInstant = new Worker('./js/worker.js');
+    drawingWorker = new Worker('./js/worker.js');
+    dataWorker = new Worker('./js/data/data-worker.js');
 
-    webWorkerInstant.addEventListener('message', (event) => {
+    const channel = new MessageChannel()
+
+    drawingWorker.addEventListener('message', (event) => {
         if (event.data.success) {
             console.error(event.data.data.length);
         } else {
@@ -192,19 +196,28 @@ function _createWebWorker() {
         }
     });
 
-    webWorkerInstant.postMessage({msgType: 'INIT', data: { width, height, resolution, view }}, [view]);
+    dataWorker.addEventListener('message', (event) => {
+        if (event.data) {
+            console.log(event.data.data);
+        } else {
+            console.error('Error:', event.data.error);
+        }
+    });
+
+   drawingWorker.postMessage({msgType: 'INIT', data: { width, height, resolution, view }, port : channel.port1}, [view, channel.port1]);
+    dataWorker.postMessage({msgType: 'INIT', port : channel.port2}, [channel.port2]);
 }
 
 function _subscribeBtnActions () {
     // Button Events subscribe
     document.getElementById('speedPlus').addEventListener('click', () => {
         console.info('Speed + Clicked...');
-        webWorkerInstant.postMessage({msgType: 'ACTION', data:{ actionType: 'speedPlus', value: 0.02 }});
+        drawingWorker.postMessage({msgType: 'ACTION', data:{ actionType: 'speedPlus', value: 0.02 }});
     });
 
     document.getElementById('speedMinus').addEventListener('click', () => {
         console.info('Speed - Clicked...');
-        webWorkerInstant.postMessage({msgType: 'ACTION', data:{ actionType: 'speedMinus', value: 0.02 }});
+        drawingWorker.postMessage({msgType: 'ACTION', data:{ actionType: 'speedMinus', value: 0.02 }});
     });
 }
 
@@ -221,7 +234,7 @@ function _subscribeCanvasEvents () {
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            webWorkerInstant.postMessage({msgType: 'EVENT', data: { eventType: 'mousemove', point: {x, y} }});
+            drawingWorker.postMessage({msgType: 'EVENT', data: { eventType: 'mousemove', point: {x, y} }});
         }
     });
 
@@ -231,9 +244,13 @@ function _subscribeCanvasEvents () {
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            webWorkerInstant.postMessage({msgType: 'EVENT', data: {eventType: type, point: {x, y}}});
+            drawingWorker.postMessage({msgType: 'EVENT', data: {eventType: type, point: {x, y}}});
         });
     });
+}
+
+function _sendChartRequest () {
+    drawingWorker.postMessage({msgType: 'DRAW'});
 }
 
 function start() {
@@ -241,6 +258,7 @@ function start() {
     _createWebWorker();
     _subscribeBtnActions();
     _subscribeCanvasEvents();
+    _sendChartRequest();
     // _createContainer();
     // _initChart(baseContainer);
 
