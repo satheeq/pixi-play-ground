@@ -1,13 +1,21 @@
-importScripts('./web-data-adapter.js');
-
-async function sendChartRequest (params) {
-    let data;
-
+function importDataAdapterScripts (params) {
     switch (params.type) {
         case 'WEB':
-            data = await sendMixChartRequest(params);
+            self.importScripts('./web-data-adapter.js');
+            break;
+
+        case 'MOBILE':
+            self.importScripts('./mobile-data-adapter.js');
+            break;
+
+        case 'SOCKET':
+            self.importScripts('./socket-data-adapter.js');
             break;
     }
+}
+
+async function sendChartRequest (params) {
+    const data = await getChartData(params);
 
     return data;
 }

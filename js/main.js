@@ -186,7 +186,7 @@ function _createWebWorker() {
     drawingWorker = new Worker('./js/worker.js');
     dataWorker = new Worker('./js/data/data-worker.js');
 
-    const channel = new MessageChannel()
+    const channel = new MessageChannel();
 
     drawingWorker.addEventListener('message', (event) => {
         if (event.data.success) {
@@ -205,7 +205,7 @@ function _createWebWorker() {
     });
 
    drawingWorker.postMessage({msgType: 'INIT', data: { width, height, resolution, view }, port : channel.port1}, [view, channel.port1]);
-    dataWorker.postMessage({msgType: 'INIT', port : channel.port2}, [channel.port2]);
+   dataWorker.postMessage({msgType: 'INIT', params: {type: 'WEB'}, port : channel.port2}, [channel.port2]);
 }
 
 function _subscribeBtnActions () {

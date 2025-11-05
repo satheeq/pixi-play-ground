@@ -1,4 +1,4 @@
-function generateIntradayMixRequest (exg, sym, args = {}) {
+function generateChartMixRequest (exg, sym, args = {}) {
     let reqUrlPrefix = `https://data-sa9.mubasher.net/mix2/ClientServiceProvider`;
 
     const queryParams = {
@@ -12,10 +12,9 @@ function generateIntradayMixRequest (exg, sym, args = {}) {
         E: exg,
         S: sym,
         AE: 1,
-        CM: 2,
+        CM: args.isDailyBased ? 3 : 2, // History: 3, Intraday: 2
         CT: 8,
-        SO: 'DESC',
-        ...args,
+        SO: 'DESC'
     };
 
     let url;

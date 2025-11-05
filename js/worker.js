@@ -125,7 +125,6 @@ self.addEventListener('message', async (event) => {
                 dataWorkerPort.postMessage({
                     msgType: 'FETCH_DATA',
                     params:  {
-                        type: 'WEB',
                         data: {
                             sym: '1010',
                             exg: 'TDWL',

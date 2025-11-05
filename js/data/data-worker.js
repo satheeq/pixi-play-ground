@@ -17,6 +17,7 @@ self.addEventListener('message',  function (event) {
                 };
                 drawingWorkerPort.start();
 
+                importDataAdapterScripts(params);
                 break;
 
         }
