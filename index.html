@@ -14,6 +14,7 @@
         html, body {
             height: 100%;
             margin: 0;
+            padding: 0;
         }
 
         body {
@@ -21,28 +22,26 @@
             flex-direction: column;
         }
 
-        #controllerContainer {
+        #chartControllerContainer {
             height: 75px;
             display: flex;
             gap: 10px;
             align-items: center;
+            padding: 0 10px;
         }
 
         #chartContainer {
-            flex: 1;
-            position: relative;
-            /*width: 100%;*/
-            /*height: 100%;*/
-            /*overflow: hidden;*/
+            flex: 1; /* fills remaining height */
+            position: relative; /* stack children absolutely */
         }
 
         canvas {
             position: absolute;
             top: 0;
             left: 0;
-            display: block;
             width: 100%;
             height: 100%;
+            display: block;
             border: 1px solid blue;
         }
 

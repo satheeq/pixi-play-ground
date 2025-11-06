@@ -2,7 +2,7 @@ let app;
 let baseContainer;
 let isDragging = false;
 let webWorkerInstant;
-let baseCanvas;
+let drawingCanvas;
 let actionCanvas;
 
 function _createApp() {
@@ -161,11 +161,11 @@ function _createWebWorker() {
         height = document.body.clientHeight - (controllerContainer.clientHeight); // 10px Margin and 16px body margin
     const resolution = window.devicePixelRatio;
 
-    baseCanvas = document.getElementById('baseCanvas'); // Drawing Panel
+    drawingCanvas = document.getElementById('baseCanvas'); // Drawing Panel
     actionCanvas = document.getElementById('overlayCanvas'); // Interaction Panel
 
-    baseCanvas.style.width = `${width}px`;
-    baseCanvas.style.height = `${height}px`;
+    drawingCanvas.style.width = `${width}px`;
+    drawingCanvas.style.height = `${height}px`;
 
     actionCanvas.width = width * resolution;
     actionCanvas.height = height * resolution;
@@ -173,10 +173,10 @@ function _createWebWorker() {
     actionCanvas.style.height = `${height}px`;
 
     canvasContainer.appendChild(actionCanvas);
-    canvasContainer.appendChild(baseCanvas);
+    canvasContainer.appendChild(drawingCanvas);
 
     // Transfer canvas control to the worker
-    const view = baseCanvas.transferControlToOffscreen();
+    const view = drawingCanvas.transferControlToOffscreen();
 
     // Create the worker
     webWorkerInstant = new Worker('./js/worker.js');
