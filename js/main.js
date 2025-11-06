@@ -244,11 +244,11 @@ function _subscribeCanvasEvents () {
         });
     });
 
-    ['touchstart', 'touchend'].forEach(type => {
-        actionCanvas.addEventListener(type, (e) => {
-            onMouseEvent(e, type);
-        });
-    });
+    // ['touchstart', 'touchend'].forEach(type => {
+    //     actionCanvas.addEventListener(type, (e) => {
+    //         onMouseEvent(e, type);
+    //     });
+    // });
 }
 
 function start() {
