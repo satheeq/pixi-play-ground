@@ -1,7 +1,7 @@
 let app;
 let baseContainer;
 let isDragging = false;
-let webWorkerInstant;
+let webWorkerInstance;
 let drawingCanvas;
 let actionCanvas;
 
@@ -179,9 +179,9 @@ function _createWebWorker() {
     const view = drawingCanvas.transferControlToOffscreen();
 
     // Create the worker
-    webWorkerInstant = new Worker('./js/worker.js');
+    webWorkerInstance = new Worker('./js/worker.js');
 
-    webWorkerInstant.addEventListener('message', (event) => {
+    webWorkerInstance.addEventListener('message', (event) => {
         if (event.data.success) {
             console.error(event.data.data.length);
         } else {
@@ -189,26 +189,26 @@ function _createWebWorker() {
         }
     });
 
-    webWorkerInstant.postMessage({msgType: 'INIT', data: { width, height, resolution, view }}, [view]);
+    webWorkerInstance.postMessage({msgType: 'INIT', data: { width, height, resolution, view }}, [view]);
 }
 
 function _subscribeBtnActions () {
     // Button Events subscribe
     document.getElementById('speedPlus').addEventListener('click', () => {
         console.info('Speed + Clicked...');
-        webWorkerInstant.postMessage({msgType: 'ACTION', data:{ actionType: 'speedPlus', value: 0.02 }});
+        webWorkerInstance.postMessage({msgType: 'ACTION', data:{ actionType: 'speedPlus', value: 0.02 }});
     });
 
     document.getElementById('speedMinus').addEventListener('click', () => {
         console.info('Speed - Clicked...');
-        webWorkerInstant.postMessage({msgType: 'ACTION', data:{ actionType: 'speedMinus', value: 0.02 }});
+        webWorkerInstance.postMessage({msgType: 'ACTION', data:{ actionType: 'speedMinus', value: 0.02 }});
     });
 }
 
 function _subscribeCanvasEvents () {
     let lastSent = 0;
 
-    actionCanvas.addEventListener('mousemove', (e) => {
+    const onMouseMove = (e) => {
         const now = performance.now();
 
         if (now - lastSent > 16) { // ~60fps
@@ -218,17 +218,35 @@ function _subscribeCanvasEvents () {
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            webWorkerInstant.postMessage({msgType: 'EVENT', data: { eventType: 'mousemove', point: {x, y} }});
+            webWorkerInstance.postMessage({msgType: 'EVENT', data: { eventType: 'mousemove', point: {x, y} }});
         }
+    };
+
+    const onMouseEvent = (e, type) => {
+        const rect = actionCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        webWorkerInstance.postMessage({msgType: 'EVENT', data: {eventType: type, point: {x, y}}});
+    };
+
+    actionCanvas.addEventListener('mousemove', (e) => {
+        onMouseMove(e);
+    });
+
+    actionCanvas.addEventListener('touchmove', (e) => {
+        onMouseMove(e);
     });
 
     ['mousedown', 'mouseup', 'click'].forEach(type => {
         actionCanvas.addEventListener(type, (e) => {
-            const rect = actionCanvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            onMouseEvent(e, type);
+        });
+    });
 
-            webWorkerInstant.postMessage({msgType: 'EVENT', data: {eventType: type, point: {x, y}}});
+    ['touchstart', 'touchend'].forEach(type => {
+        actionCanvas.addEventListener(type, (e) => {
+            onMouseEvent(e, type);
         });
     });
 }
