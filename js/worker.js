@@ -33,14 +33,14 @@ self.addEventListener('message', async (event) => {
                 app = new PIXI.Application({ width, height, background: '#1099bb', resolution, view });
 
                 // load the texture we need
-                const texture = await PIXI.Assets.load('https://pixijs.com/assets/bunny.png');
+                const texture = await PIXI.Assets.load('../img/bunny.png');
 
                 // This creates a texture from a 'bunny.png' image
                 bunny = new PIXI.Sprite(texture);
 
                 // Setup the position of the bunny
-                bunny.x = app.renderer.width / 2;
-                bunny.y = app.renderer.height / 2;
+                bunny.x = width / 2;
+                bunny.y = height / 2;
 
                 // Rotate around the center
                 bunny.anchor.x = 0.5;

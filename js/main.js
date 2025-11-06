@@ -154,27 +154,26 @@ function _createContainer() {
 
 function _createWebWorker() {
     console.log('Creating web worker (pixi imported)');
+    const canvasContainer = document.getElementById('chartContainer');
+    const controllerContainer = document.getElementById('controllerContainer');
 
-    const width = 800, height = 600;
+    const width = document.body.clientWidth,
+        height = document.body.clientHeight - (controllerContainer.clientHeight); // 10px Margin and 16px body margin
     const resolution = window.devicePixelRatio;
 
-    baseCanvas = document.createElement('canvas'); // Drawing Panel
-    actionCanvas = document.createElement('canvas'); // Interaction Panel
+    baseCanvas = document.getElementById('baseCanvas'); // Drawing Panel
+    actionCanvas = document.getElementById('overlayCanvas'); // Interaction Panel
 
-    baseCanvas.id = 'baseCanvas';
     baseCanvas.style.width = `${width}px`;
     baseCanvas.style.height = `${height}px`;
 
-    actionCanvas.id = 'overlayCanvas';
     actionCanvas.width = width * resolution;
     actionCanvas.height = height * resolution;
     actionCanvas.style.width = `${width}px`;
     actionCanvas.style.height = `${height}px`;
 
-    const targetDiv = document.getElementById('chartContainer');
-
-    targetDiv.appendChild(actionCanvas);
-    targetDiv.appendChild(baseCanvas);
+    canvasContainer.appendChild(actionCanvas);
+    canvasContainer.appendChild(baseCanvas);
 
     // Transfer canvas control to the worker
     const view = baseCanvas.transferControlToOffscreen();
