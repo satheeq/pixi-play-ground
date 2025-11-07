@@ -184,7 +184,7 @@ function _createWebWorker() {
 
     // Create the worker
     drawingWorker = new Worker('./js/worker.js');
-    dataWorker = new Worker('./js/data/data-worker.js');
+    // dataWorker = new Worker('./js/data/data-worker.js');
 
     const channel = new MessageChannel();
 
@@ -196,16 +196,16 @@ function _createWebWorker() {
         }
     });
 
-    dataWorker.addEventListener('message', (event) => {
-        if (event.data) {
-            console.log(event.data.data);
-        } else {
-            console.error('Error:', event.data.error);
-        }
-    });
+    // dataWorker.addEventListener('message', (event) => {
+    //     if (event.data) {
+    //         console.log(event.data.data);
+    //     } else {
+    //         console.error('Error:', event.data.error);
+    //     }
+    // });
 
    drawingWorker.postMessage({msgType: 'INIT', data: { width, height, resolution, view }, port : channel.port1}, [view, channel.port1]);
-   dataWorker.postMessage({msgType: 'INIT', params: {type: 'WEB'}, port : channel.port2}, [channel.port2]);
+   // dataWorker.postMessage({msgType: 'INIT', params: {type: 'WEB'}, port : channel.port2}, [channel.port2]);
 }
 
 function _subscribeBtnActions () {

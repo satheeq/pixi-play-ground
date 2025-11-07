@@ -1,7 +1,7 @@
 importScripts('../lib/pixi-worker-lib.js'); // Import Web Worker support PIXI library
 
 let app;
-let dataWorkerPort;
+let dataWorker;
 let bunny;
 let bunnyRotation = 0.02;
 let textStyle = new PIXI.TextStyle({
@@ -32,12 +32,18 @@ self.addEventListener('message', async (event) => {
                 // with a fallback to a canvas render. It will also setup the ticker
                 // and the root stage PIXI.Container
                 app = new PIXI.Application({ width, height, background: '#1099bb', resolution, view });
-                dataWorkerPort = port;
+                // dataWorkerPort = port;
+                //
+                // dataWorkerPort.onmessage = function (event) {
+                //     handleDataWorkerEvents(event);
+                // };
+                // dataWorkerPort.start();
+                dataWorker = new Worker('./data/data-worker.js');
+                dataWorker.onmessage = function (event) {
+                        handleDataWorkerEvents(event);
+                    };
 
-                dataWorkerPort.onmessage = function (event) {
-                    handleDataWorkerEvents(event);
-                };
-                dataWorkerPort.start();
+                dataWorker.postMessage({msgType: 'INIT', params: {filename: './socket-data-adapter.js'}});
 
                 // load the texture we need
                 const texture = await PIXI.Assets.load('https://pixijs.com/assets/bunny.png');
@@ -122,11 +128,11 @@ self.addEventListener('message', async (event) => {
 
             case 'DRAW':
                 // Request for chart data
-                dataWorkerPort.postMessage({
+                dataWorker.postMessage({
                     msgType: 'FETCH_DATA',
                     params:  {
                         data: {
-                            sym: '1010',
+                            sym: '1020',
                             exg: 'TDWL',
                             interval: '1D',
                             period: '1Y'
