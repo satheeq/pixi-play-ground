@@ -154,6 +154,7 @@ function _createContainer() {
 
 function _createWebWorker() {
     console.log('Creating web worker (pixi imported)');
+
     const canvasContainer = document.getElementById('chartContainer');
     const controllerContainer = document.getElementById('controllerContainer');
 
@@ -195,12 +196,12 @@ function _createWebWorker() {
 function _subscribeBtnActions () {
     // Button Events subscribe
     document.getElementById('speedPlus').addEventListener('click', () => {
-        console.info('Speed + Clicked...');
+        console.info('Speed (+) Clicked...');
         webWorkerInstance.postMessage({msgType: 'ACTION', data:{ actionType: 'speedPlus', value: 0.02 }});
     });
 
     document.getElementById('speedMinus').addEventListener('click', () => {
-        console.info('Speed - Clicked...');
+        console.info('Speed (-) Clicked...');
         webWorkerInstance.postMessage({msgType: 'ACTION', data:{ actionType: 'speedMinus', value: 0.02 }});
     });
 }
@@ -208,7 +209,7 @@ function _subscribeBtnActions () {
 function _subscribeCanvasEvents () {
     let lastSent = 0;
 
-    const onMouseMove = (e) => {
+    const onPointerMove = (e) => {
         const now = performance.now();
 
         if (now - lastSent > 16) { // ~60fps
@@ -218,37 +219,45 @@ function _subscribeCanvasEvents () {
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            webWorkerInstance.postMessage({msgType: 'EVENT', data: { eventType: 'mousemove', point: {x, y} }});
+            webWorkerInstance.postMessage({msgType: 'EVENT', data: {
+                eventType: 'move',
+                pointerId: e.pointerId,
+                pointerType: e.pointerType,
+                point: {x, y, dx: e.movementX, dy: e.movementY}
+            }});
         }
     };
 
-    const onMouseEvent = (e, type) => {
+    const onPointerEvent = (e, type) => {
         const rect = actionCanvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        webWorkerInstance.postMessage({msgType: 'EVENT', data: {eventType: type, point: {x, y}}});
+        webWorkerInstance.postMessage({msgType: 'EVENT', data: {
+            eventType: type,
+            pointerId: e.pointerId,
+            pointerType: e.pointerType,
+            point: {x, y, dx: e.movementX, dy: e.movementY},
+        }});
     };
 
-    actionCanvas.addEventListener('mousemove', (e) => {
-        onMouseMove(e);
+    actionCanvas.addEventListener('pointermove', (e) => {
+        onPointerMove(e);
     });
 
-    actionCanvas.addEventListener('touchmove', (e) => {
-        onMouseMove(e);
+    actionCanvas.addEventListener('pointerdown', (e) => {
+        onPointerEvent(e, 'down');
     });
 
-    ['mousedown', 'mouseup', 'click'].forEach(type => {
-        actionCanvas.addEventListener(type, (e) => {
-            onMouseEvent(e, type);
-        });
+    actionCanvas.addEventListener('pointerup', (e) => {
+        onPointerEvent(e, 'up');
+        actionCanvas.releasePointerCapture(e.pointerId);
     });
 
-    // ['touchstart', 'touchend'].forEach(type => {
-    //     actionCanvas.addEventListener(type, (e) => {
-    //         onMouseEvent(e, type);
-    //     });
-    // });
+    actionCanvas.addEventListener('pointercancel', (e) => {
+        onPointerEvent(e, 'up');
+        actionCanvas.releasePointerCapture(e.pointerId);
+    });
 }
 
 function start() {
