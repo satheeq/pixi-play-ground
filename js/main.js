@@ -1,6 +1,7 @@
 let app;
 let baseContainer;
 let isDragging = false;
+let webWorkerInstance;
 let drawingWorker;
 let dataWorker;
 let drawingCanvas;
@@ -156,21 +157,19 @@ function _createContainer() {
 function _createWebWorker() {
     console.log('Creating web worker (pixi imported)');
 
-    const controllerContainer = document.getElementById('chartControllerContainer');
     const canvasContainer = document.getElementById('chartContainer');
+    const controllerContainer = document.getElementById('controllerContainer');
 
     const width = document.body.clientWidth,
         height = document.body.clientHeight - (controllerContainer.clientHeight); // 10px Margin and 16px body margin
     const resolution = window.devicePixelRatio;
 
-    drawingCanvas = document.createElement('canvas'); // Drawing Panel
-    actionCanvas = document.createElement('canvas'); // Interaction Panel
+    drawingCanvas = document.getElementById('baseCanvas'); // Drawing Panel
+    actionCanvas = document.getElementById('overlayCanvas'); // Interaction Panel
 
-    drawingCanvas.id = 'baseCanvas';
     drawingCanvas.style.width = `${width}px`;
     drawingCanvas.style.height = `${height}px`;
 
-    actionCanvas.id = 'overlayCanvas';
     actionCanvas.width = width * resolution;
     actionCanvas.height = height * resolution;
     actionCanvas.style.width = `${width}px`;
@@ -183,12 +182,12 @@ function _createWebWorker() {
     const view = drawingCanvas.transferControlToOffscreen();
 
     // Create the worker
-    drawingWorker = new Worker('./js/worker.js');
+    webWorkerInstance = new Worker('./js/worker.js');
     // dataWorker = new Worker('./js/data/data-worker.js');
 
     const channel = new MessageChannel();
 
-    drawingWorker.addEventListener('message', (event) => {
+    webWorkerInstance.addEventListener('message', (event) => {
         if (event.data.success) {
             console.error(event.data.data.length);
         } else {
@@ -204,27 +203,27 @@ function _createWebWorker() {
     //     }
     // });
 
-   drawingWorker.postMessage({msgType: 'INIT', data: { width, height, resolution, view }, port : channel.port1}, [view, channel.port1]);
    // dataWorker.postMessage({msgType: 'INIT', params: {type: 'WEB'}, port : channel.port2}, [channel.port2]);
+    webWorkerInstance.postMessage({msgType: 'INIT', data: { width, height, resolution, view }}, [view]);
 }
 
 function _subscribeBtnActions () {
     // Button Events subscribe
     document.getElementById('speedPlus').addEventListener('click', () => {
-        console.info('Speed + Clicked...');
-        drawingWorker.postMessage({msgType: 'ACTION', data:{ actionType: 'speedPlus', value: 0.02 }});
+        console.info('Speed (+) Clicked...');
+        webWorkerInstance.postMessage({msgType: 'ACTION', data:{ actionType: 'speedPlus', value: 0.02 }});
     });
 
     document.getElementById('speedMinus').addEventListener('click', () => {
-        console.info('Speed - Clicked...');
-        drawingWorker.postMessage({msgType: 'ACTION', data:{ actionType: 'speedMinus', value: 0.02 }});
+        console.info('Speed (-) Clicked...');
+        webWorkerInstance.postMessage({msgType: 'ACTION', data:{ actionType: 'speedMinus', value: 0.02 }});
     });
 }
 
 function _subscribeCanvasEvents () {
     let lastSent = 0;
 
-    actionCanvas.addEventListener('mousemove', (e) => {
+    const onPointerMove = (e) => {
         const now = performance.now();
 
         if (now - lastSent > 16) { // ~60fps
@@ -234,18 +233,44 @@ function _subscribeCanvasEvents () {
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            drawingWorker.postMessage({msgType: 'EVENT', data: { eventType: 'mousemove', point: {x, y} }});
+            webWorkerInstance.postMessage({msgType: 'EVENT', data: {
+                eventType: 'move',
+                pointerId: e.pointerId,
+                pointerType: e.pointerType,
+                point: {x, y, dx: e.movementX, dy: e.movementY}
+            }});
         }
+    };
+
+    const onPointerEvent = (e, type) => {
+        const rect = actionCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        webWorkerInstance.postMessage({msgType: 'EVENT', data: {
+            eventType: type,
+            pointerId: e.pointerId,
+            pointerType: e.pointerType,
+            point: {x, y, dx: e.movementX, dy: e.movementY},
+        }});
+    };
+
+    actionCanvas.addEventListener('pointermove', (e) => {
+        onPointerMove(e);
     });
 
-    ['mousedown', 'mouseup', 'click'].forEach(type => {
-        actionCanvas.addEventListener(type, (e) => {
-            const rect = actionCanvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+    actionCanvas.addEventListener('pointerdown', (e) => {
+        onPointerEvent(e, 'down');
+    });
 
-            drawingWorker.postMessage({msgType: 'EVENT', data: {eventType: type, point: {x, y}}});
-        });
+    actionCanvas.addEventListener('pointerup', (e) => {
+        onPointerEvent(e, 'up');
+        actionCanvas.releasePointerCapture(e.pointerId);
+    });
+
+    actionCanvas.addEventListener('pointercancel', (e) => {
+        onPointerEvent(e, 'up');
+        actionCanvas.releasePointerCapture(e.pointerId);
     });
 }
 

@@ -12,6 +12,7 @@ let textStyle = new PIXI.TextStyle({
     fontWeight: 'bold',
     strokeThickness: 0
 });
+let textTimeout = undefined;
 
 let textPool = [
     new PIXI.Text('', textStyle),
@@ -19,6 +20,10 @@ let textPool = [
     new PIXI.Text('', textStyle),
 ];
 
+let isDragging = false;
+let activePointer = undefined;
+let dragTarget = undefined;
+let dragOffset = {x: 0, y: 0};
 
 self.addEventListener('message', async (event) => {
     if (event.data) {
@@ -46,7 +51,7 @@ self.addEventListener('message', async (event) => {
                 dataWorker.postMessage({msgType: 'INIT', params: {filename: './socket-data-adapter.js'}});
 
                 // load the texture we need
-                const texture = await PIXI.Assets.load('https://pixijs.com/assets/bunny.png');
+                const texture = await PIXI.Assets.load('../img/bunny.png');
 
                 // This creates a texture from a 'bunny.png' image
                 bunny = new PIXI.Sprite(texture);
@@ -90,38 +95,61 @@ self.addEventListener('message', async (event) => {
                 break;
 
             case 'EVENT':
+                const x = data.point.x;
+                const y = data.point.y;
+                const pointerId = data.pointerId;
+
                 switch (data.eventType) {
-                    case 'click':
-                        console.info('CLICK: ', data.point);
+                    case 'down':
+                        isDragging = true;
 
-                        textPool[0].text = `You clicked: `;
-                        textPool[1].text = `X: ${data.point.x}\rY: ${data.point.y}`;
+                        if (isPointOnSprite(x, y, bunny)) {
+                            activePointer = pointerId;
+                            dragTarget = bunny;
+                            dragOffset.x = bunny.x - x;
+                            dragOffset.y = bunny.y - y;
+                        }
 
-                        textPool[0].position.set(data.point.x, data.point.y);
-                        textPool[1].position.set(data.point.x, data.point.y + 20);
+                        console.info('## POINTER_DOWN: ', data.point);
+                        break;
 
-                        app.stage.addChild(textPool[0]);
-                        app.stage.addChild(textPool[1]);
-
-                        setTimeout(() => {
-                            app.stage.removeChild(textPool[0]);
-                            app.stage.removeChild(textPool[1]);
-                        }, 2000);
-                        break
-                    case 'mousemove':
-                        textPool[2].text = `X: ${data.point.x}/ Y: ${data.point.y}`;
-
+                    case 'move':
+                        textPool[2].text = `X: ${x}/ Y: ${y}`;
                         textPool[2].position.set(10, 10);
 
                         app.stage.addChild(textPool[2]);
-                        break;
 
-                    case 'mousedown':
-                        console.info('MOUSE_DOWN: ', data.point);
-                        break;
+                        if (isDragging && pointerId === activePointer) {
+                            dragTarget.x = x + dragOffset.x;
+                            dragTarget.y = y + dragOffset.y;
+                        }
 
-                    case 'mouseup':
-                        console.info('MOUSE_UP: ', data.point);
+                        break;
+                    case 'up':
+                        isDragging = false;
+                        dragTarget = undefined;
+                        activePointer = undefined;
+
+                        console.info('## POINTER_UP: ', data.point);
+
+                        clearTimeout(textTimeout);
+
+                        if (!isPointOnSprite(x, y, bunny)) {
+                            textPool[0].text = `You Pointed: `;
+                            textPool[1].text = `X: ${x}\rY: ${y}`;
+
+                            textPool[0].position.set(x, y);
+                            textPool[1].position.set(x, y + 20);
+
+                            app.stage.addChild(textPool[0]);
+                            app.stage.addChild(textPool[1]);
+
+                            textTimeout = setTimeout(() => {
+                                app.stage.removeChild(textPool[0]);
+                                app.stage.removeChild(textPool[1]);
+                            }, 2000);
+                        }
+
                         break
                 }
                 break;
@@ -150,6 +178,20 @@ self.addEventListener('message', async (event) => {
 
 });
 
+function isPointOnSprite (x, y, sprite) {
+    const local = sprite.toLocal({x, y});
+    const w = sprite.width, h = sprite.height;
+
+    if (local.x >= -w * sprite.anchor.x &&
+        local.x <=  w * (1 - sprite.anchor.x) &&
+        local.y >= -h * sprite.anchor.y &&
+        local.y <=  h * (1 - sprite.anchor.y)) {
+
+        // Pointer is inside the sprite
+        console.info('## isPointOnSprite: YES ##');
+        return true;
+    }
+}
 function handleDataWorkerEvents (event) {
     switch (event.data.msgType) {
         case 'RECEIVE_DATA':

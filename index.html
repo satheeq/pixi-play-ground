@@ -11,10 +11,6 @@
     <title>PIXI Play Ground</title>
 
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
         html, body {
             height: 100%;
             margin: 0;
@@ -26,7 +22,7 @@
             flex-direction: column;
         }
 
-        #chartControllerContainer {
+        #controllerContainer {
             height: 75px;
             display: flex;
             gap: 10px;
@@ -47,6 +43,7 @@
             height: 100%;
             display: block;
             border: 1px solid blue;
+            touch-action: none;
         }
 
         #baseCanvas {
@@ -60,11 +57,14 @@
     </style>
 </head>
 <body onload="start()">
-    <div id="chartControllerContainer">
-        <h3>PIXI Play Ground</h3>
+    <div id="controllerContainer" style="padding-bottom: 10px;">
+        <h3>Hello PixiJS</h3>
         <button id="speedPlus">Rotate Speed + </button>
         <button id="speedMinus">Rotate Speed - </button>
     </div>
-    <div id="chartContainer"></div>
+    <div id="chartContainer">
+        <canvas id="overlayCanvas"></canvas>
+        <canvas id="baseCanvas"></canvas>
+    </div>
 </body>
 </html>
